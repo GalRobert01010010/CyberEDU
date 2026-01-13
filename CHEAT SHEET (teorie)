@@ -1,0 +1,51 @@
+# Cheat Sheet: Comenzi Linux utilizate (Day 1)
+- Challenge types: Web & Forensics
+- Purpose: Documentarea sintaxei și a flag-urilor pentru utilizare rapidă în task-uri viitoare.
+
+## 1. Network & Web (curl)
+Utilizat pentru interacțiunea cu servere web direct din terminal.
+
+- `curl -s [URL]`
+    - `-s` (silent) → Ascunde bara de progres și mesajele de eroare. Util pentru a obține doar conținutul paginii.
+- `curl -I [URL]`
+    - `-I` (head) → Fetch-uiește doar header-ele HTTP (status code, server type, cookies).
+- `curl -L [URL]`
+    - `-L` (location) → Urmărește automat redirecționările (ex: 301/302 Found).
+
+## 2. Text & Binary Processing (grep, sed, tr, strings)
+Utilizate pentru filtrarea și curățarea datelor.
+
+- `grep -E "[pattern]"`
+    - `-E` (extended-regexp) → Permite utilizarea metacaracterelor avansate (ex: `|`, `+`, `{}`).
+- `sed 's/[vechi]/[nou]/g'`
+    - `s` (substitute) → Comanda de înlocuire.
+    - `g` (global) → Înlocuiește toate aparițiile din linie, nu doar pe prima.
+- `tr -d '[caracter]'`
+    - `-d` (delete) → Șterge toate instanțele caracterului specificat din input.
+- `strings [fisier]`
+    - Extrage toate șirurile de caractere lizibile (ASCII) dintr-un fișier binar.
+
+## 3. Forensics & Image Manipulation (ImageMagick, 7z)
+Utilizate pentru repararea și extragerea datelor din fișiere corupte.
+
+- `convert [input] -resize [scale] [output]`
+    - `-resize` → Modifică dimensiunile. Scalarea la procente mari (800%) ajută la citirea manuală a textului mic.
+- `convert [input] -negate [output]`
+    - `-negate` → Inversează culorile imaginii pentru contrast mai bun.
+- `7z x [arhiva] -p[parola]`
+    - `x` (extract) → Extrage fișierele menținând structura directoarelor.
+    - `-p` → Introduce parola direct în linie (fără spațiu după `-p`).
+
+## 4. Inspecție Binară (hexedit, file)
+Utilizate pentru analiza structurii de fișiere la nivel de octeți.
+
+- `hexedit [fisier]`
+    - Permite vizualizarea și modificarea manuală a octeților (Magic Bytes).
+- `file [fisier]`
+    - Determină tipul de fișier pe baza header-ului, nu a extensiei.
+
+---
+
+#### Notes:
+- **Redirecționare (`>`):** Folosește mereu `>` pentru a salva rezultatul procesării într-un fișier nou (`comanda > nou.jpg`), evitând coruperea sursei originale.
+- **Pipes (`|`):** Combină comenzile (ex: `curl -s URL | grep FLAG`) pentru a procesa datele în timp real.
