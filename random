@@ -1,0 +1,53 @@
+# random
+- Challenge type: Reverse Engineering — Logic Bypass / Environment Manipulation
+- Goal: Identify a hidden input condition (`1337`) in a compiled binary and extract a flag stored in a server-side environment variable.
+
+## Commands:
+
+objdump -d main | grep -B 10 -A 5 "call.*getenv"
+- objdump → utility for displaying information from object files
+- -d → disassemble (translates machine code into human-readable assembly)
+- | → pipe the assembly output to the filter tool
+- grep → search tool for text patterns
+- -B 10 → Before (displays 10 lines of code before the match to see register preparation)
+- -A 5 → After (displays 5 lines after the match to see how the result is handled)
+- "call.*getenv" → regex pattern to find where the program requests environment variables
+- Purpose: Locate the logic gate that controls access to the flag and identify the variable name being requested.
+
+
+
+python3 -c "print(open('main','rb').read()[0x2021:0x2030])"
+- python3 -c → executes a Python command directly from the terminal
+- open('main','rb') → opens the binary file in Read-Binary mode
+- .read()[0x2021:0x2030] → slices the file to read bytes at the specific memory offset found in objdump
+- Purpose: Confirm the exact name of the environment variable (found to be `FLAG`) by reading the binary's data section at the address referenced in the assembly.
+
+gdb ./main
+- gdb → the GNU Debugger used for dynamic analysis
+- break getenv → sets a breakpoint at the entry of the system function that retrieves environment variables
+- run → starts the program execution
+- Purpose: Pause the program execution to inspect memory and registers at critical points.
+
+(gdb) x/s $rdi
+- x → examine memory
+- /s → format the output as a null-terminated string
+- $rdi → the register used in x64 Linux to pass the first argument to a function
+- Purpose: Verify that the program is indeed looking for the string "FLAG" when the getenv function is called.
+
+
+
+nc 34.40.70.104 30720
+- nc → Netcat, a utility for reading from and writing to network connections
+- IP & Port → the remote address where the official challenge is hosted
+- Input "1337" → the "magic number" discovered during assembly analysis that prevents the program from jumping over the flag-printing logic
+- Purpose: Connect to the live environment and trigger the hidden backdoor to print the real flag.
+
+### Answer:
+flag{l33t_m3_to_g3t_th3_flag}
+
+---
+
+#### Notes:
+- Always look for `cmp` (compare) instructions near menu logic; they often reveal hidden options or "secret" codes like `1337`.
+- The `jmp` (jump) instruction at `0x1325` was the "barrier" that had to be avoided by providing the correct input.
+- Memory addresses in `objdump` (like `0x2021`) point to where static strings are stored in the binary's data segment.
