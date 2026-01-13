@@ -1,0 +1,33 @@
+# BBBBBBBBBB
+- Challenge type: Forensics — Data Recovery / Obfuscation
+- Goal: Repair a corrupted binary file by removing junk padding and extract hidden strings to decrypt the final archive.
+
+## Commands:
+
+sed 's/BBBBBBBBBB//g' chall.jpg > chall_repaired.jpg
+- sed → stream editor for filtering and transforming text/binary data
+- s/BBBBBBBBBB//g → substitute the string "BBBBBBBBBB" with nothing (delete) globally
+- chall.jpg → the input file corrupted with junk "B" characters
+- > → redirects the cleaned output to a new file
+- Purpose: Restore the file's original structure by stripping the "B" character padding that prevented it from being recognized as a valid image.
+
+convert chall_repaired.jpg -resize 800% -negate hint.png
+- convert → ImageMagick tool for image manipulation
+- -resize 800% → enlarges the image to make small or thin text legible
+- -negate → inverts colors to increase contrast between text and background
+- Purpose: Manually recover the password from the repaired banner image after automated OCR failed.
+
+7z x chall-zip-in-zip.zip -p[TEXT_EXTRACTED]
+- 7z x → extracts files from an archive with full paths
+- -p → specifies the password (no space after the flag)
+- Purpose: Use the string recovered from the image to unlock the final archive and obtain the flag.
+
+### Answer:
+[FLAGUL_GASIT]
+
+---
+
+#### Notes:
+- **Magic Bytes:** If a file is unrecognized, check the hex header. A valid JPEG must start with `FF D8 FF`.
+- **Binary Stream Editing:** `sed` on binary files is efficient for removing large-scale repetitive junk like the 'B' flood.
+- **Visual Forensics:** Manual scaling and thresholding are required when images have extreme aspect ratios that confuse OCR tools.
