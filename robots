@@ -1,0 +1,30 @@
+# robots
+- Challenge type: Web — Information Leakage / Reconnaissance 
+- Goal: Identify hidden files using standard web protocols and extract the flag from a restricted PHP page.
+
+## Commands:
+
+ curl -s http://34.40.70.104:30412/robots.txt
+- curl → command-line tool for transferring data from or to a server
+- -s → silent mode (suppresses progress meter and error messages)
+- URL/robots.txt → the standard file used by websites to instruct web crawlers
+- Purpose: Find hidden directories or files disallowed for search engines.
+
+ curl -s http://34.40.70.104:30412/g00d_old_mus1c.php | grep -E "CTF\{.*\}" --color=never
+- curl -s → retrieves the source code of the hidden PHP page
+- | → pipe the HTML output to the search tool
+- grep → search tool for text patterns
+- -E → Extended Regular Expressions (allows the use of {} and | in patterns)
+- "CTF{.\*}" → pattern that matches "CTF" followed by any characters inside curly braces
+- --color=never → ensures the output is pure text without ANSI escape codes (important for copy-pasting flags)
+- Purpose: Directly extract the flag from the page's source code without using a browser.
+
+### Answer:
+CTF{Kr4ftw3rk_4nd_th3_r0b0ts}
+
+---
+
+#### Notes:
+- Robots.txt is the first thing to check in any Web challenge at OSC.
+- Use curl -I (Capital i) if you suspect the flag might be in the HTTP Headers instead of the page body.
+- When grep doesn't find anything, always check for HTML comments using `grep "
