@@ -1,51 +1,64 @@
-# Cheat Sheet: Comenzi Linux utilizate (Day 1)
-- Challenge types: Web & Forensics
+# Cheat Sheet: Comenzi Linux utilizate (Actualizat)
+- Challenge types: Web, Forensics & Reverse Engineering
 - Purpose: Documentarea sintaxei și a flag-urilor pentru utilizare rapidă în task-uri viitoare.
 
-## 1. Network & Web (curl)
-Utilizat pentru interacțiunea cu servere web direct din terminal.
+## 1. Network & Web (curl, nc)
+Utilizat pentru interacțiunea cu servere web sau conexiuni brute prin rețea.
 
 - `curl -s [URL]`
-    - `-s` (silent) → Ascunde bara de progres și mesajele de eroare. Util pentru a obține doar conținutul paginii.
+    - `-s` (silent) → Ascunde bara de progres. Util pentru a obține doar conținutul paginii.
 - `curl -I [URL]`
-    - `-I` (head) → Fetch-uiește doar header-ele HTTP (status code, server type, cookies).
+    - `-I` (head) → Fetch-uiește doar header-ele HTTP.
 - `curl -L [URL]`
-    - `-L` (location) → Urmărește automat redirecționările (ex: 301/302 Found).
+    - `-L` (location) → Urmărește automat redirecționările.
+- `nc [IP] [PORT]` (Netcat)
+    - **Utilizare:** Conectarea la instanța remote a challenge-ului pentru a introduce codul magic (`1337`) și a extrage flag-ul real.
+    - **Notă:** Se folosește spațiu între IP și Port.
 
-## 2. Text & Binary Processing (grep, sed, tr, strings)
-Utilizate pentru filtrarea și curățarea datelor.
+## 2. Text & Binary Processing (grep, sed, tr, strings, objdump)
+Utilizate pentru filtrarea datelor și analiza codului mașină.
 
 - `grep -E "[pattern]"`
-    - `-E` (extended-regexp) → Permite utilizarea metacaracterelor avansate (ex: `|`, `+`, `{}`).
-- `sed 's/[vechi]/[nou]/g'`
-    - `s` (substitute) → Comanda de înlocuire.
-    - `g` (global) → Înlocuiește toate aparițiile din linie, nu doar pe prima.
-- `tr -d '[caracter]'`
-    - `-d` (delete) → Șterge toate instanțele caracterului specificat din input.
-- `strings [fisier]`
-    - Extrage toate șirurile de caractere lizibile (ASCII) dintr-un fișier binar.
+    - `-E` (extended-regexp) → Permite utilizarea metacaracterelor avansate.
+- `grep -B [n] -A [m] "[pattern]"`
+    - `-B` (Before) și `-A` (After) → Esențial în Assembly pentru a vedea instrucțiunile care pregătesc regiștrii înainte de un apel de funcție (`call`).
+- `sed 's/[vechi]/[nou]/g'` → Comandă de înlocuire globală.
+- `tr -d '[caracter]'` → Șterge caractere specifice din input.
+- `strings [fisier]` → Extrage șirurile ASCII (ex: numele variabilei `FLAG`).
+- `objdump -d [fisier]`
+    - `-d` (disassemble) → Traduce binarul în Assembly. Permite identificarea salturilor (`jmp`) care ocolesc codul important.
 
-## 3. Forensics & Image Manipulation (ImageMagick, 7z)
+## 3. Reverse Engineering & Debugging (gdb, ltrace)
+Analiza execuției programului în timp real pentru a înțelege logica internă.
+
+- `ltrace ./[binar]`
+    - Interceptează apelurile către librării (ex: `getenv`). Arată exact ce date cere programul de la sistem.
+- `gdb ./[binar]` (GNU Debugger)
+    - `break [nume_functie]` → Pune un punct de oprire (ex: `break main` sau `break getenv`).
+    - `run` (r) → Pornește programul în debugger.
+    - `continue` (c) → Reia execuția după o oprire.
+    - `x/s $rdi` → Examinează (`x`) ca string (`/s`) conținutul registrului `RDI` (primul argument al funcției în x64).
+
+
+
+## 4. Forensics & Image Manipulation (ImageMagick, 7z)
 Utilizate pentru repararea și extragerea datelor din fișiere corupte.
 
-- `convert [input] -resize [scale] [output]`
-    - `-resize` → Modifică dimensiunile. Scalarea la procente mari (800%) ajută la citirea manuală a textului mic.
-- `convert [input] -negate [output]`
-    - `-negate` → Inversează culorile imaginii pentru contrast mai bun.
-- `7z x [arhiva] -p[parola]`
-    - `x` (extract) → Extrage fișierele menținând structura directoarelor.
-    - `-p` → Introduce parola direct în linie (fără spațiu după `-p`).
+- `convert [input] -resize [scale] [output]` → Mărirea textului pentru lizibilitate.
+- `convert [input] -negate [output]` → Inversarea culorilor pentru contrast.
+- `7z x [arhiva] -p[parola]` → Extragere arhive protejate.
 
-## 4. Inspecție Binară (hexedit, file)
-Utilizate pentru analiza structurii de fișiere la nivel de octeți.
+## 5. Inspecție Binară & Scripting (hexedit, file, python3)
+Utilizate pentru analiza structurii la nivel de octeți.
 
-- `hexedit [fisier]`
-    - Permite vizualizarea și modificarea manuală a octeților (Magic Bytes).
-- `file [fisier]`
-    - Determină tipul de fișier pe baza header-ului, nu a extensiei.
+- `hexedit [fisier]` → Vizualizarea și modificarea manuală a octeților (Magic Bytes).
+- `file [fisier]` → Determină tipul de fișier pe baza header-ului.
+- `python3 -c "print(open('file','rb').read()[start:end])"`
+    - **Utilizare:** Citirea unei porțiuni precise de date dintr-un binar de la un offset hexazecimal găsit în `objdump`.
 
 ---
 
 #### Notes:
-- **Redirecționare (`>`):** Folosește mereu `>` pentru a salva rezultatul procesării într-un fișier nou (`comanda > nou.jpg`), evitând coruperea sursei originale.
-- **Pipes (`|`):** Combină comenzile (ex: `curl -s URL | grep FLAG`) pentru a procesa datele în timp real.
+- **Redirecționare (`>`):** Salvează rezultatul procesării într-un fișier nou, evitând coruperea sursei.
+- **Pipes (`|`):** Combină comenzile pentru procesare în timp real (ex: `objdump -d main | grep getenv`).
+- **Logica Backdoor:** Dacă în `objdump` apare o comparație (`cmp`) care nu e în meniu, testează acea valoare (ex: `1337`) pentru a accesa căi de execuție ascunse.
