@@ -1,64 +1,62 @@
-# Cheat Sheet: Comenzi Linux utilizate (Actualizat)
-- Challenge types: Web, Forensics & Reverse Engineering
-- Purpose: Documentarea sintaxei și a flag-urilor pentru utilizare rapidă în task-uri viitoare.
+# Cheat Sheet: Comenzi Linux utilizate (Actualizat - 19.01.2026)
+* Challenge types: Web, Forensics & Reverse Engineering
+* Purpose: Documentarea sintaxei și a flag-urilor pentru utilizare rapidă în task-uri viitoare.
 
 ## 1. Network & Web (curl, nc)
-Utilizat pentru interacțiunea cu servere web sau conexiuni brute prin rețea.
+* `curl -s [URL]`
+    * `-s` (silent) → Ascunde bara de progres. Util pentru a obține doar conținutul paginii.
+* `curl -I [URL]`
+    * `-I` (head) → Fetch-uiește doar header-ele HTTP.
+* `curl -L [URL]`
+    * `-L` (location) → Urmărește automat redirecționările.
+* `nc [IP] [PORT]` (Netcat)
+    * **Utilizare:** Conectarea la instanța remote a challenge-ului pentru a introduce codul magic (`1337`) și a extrage flag-ul real.
+    * **Notă:** Se folosește spațiu între IP și Port.
 
-- `curl -s [URL]`
-    - `-s` (silent) → Ascunde bara de progres. Util pentru a obține doar conținutul paginii.
-- `curl -I [URL]`
-    - `-I` (head) → Fetch-uiește doar header-ele HTTP.
-- `curl -L [URL]`
-    - `-L` (location) → Urmărește automat redirecționările.
-- `nc [IP] [PORT]` (Netcat)
-    - **Utilizare:** Conectarea la instanța remote a challenge-ului pentru a introduce codul magic (`1337`) și a extrage flag-ul real.
-    - **Notă:** Se folosește spațiu între IP și Port.
+## 2. Text & Binary Processing (grep, strings, objdump)
+* `grep -E "[pattern]"`
+    * `-E` (extended-regexp) → Permite utilizarea metacaracterelor avansate.
+* `grep -B [n] -A [m] "[pattern]"`
+    * `-B` (Before) și `-A` (After) → Esențial în Assembly pentru a vedea instrucțiunile care pregătesc regiștrii înainte de un apel de funcție (`call`).
+* `strings [fisier]`
+    * Extrage șirurile ASCII (ex: numele variabilei `FLAG`).
+* `objdump -d -M intel [fisier]`
+    * `-d` (disassemble) → Traduce binarul în Assembly.
+    * `-M intel` → Folosește sintaxa Intel (mai ușor de citit decât AT&T).
+    * **Context:** Permite identificarea constantelor hexazecimale folosite în `cmp` (ex: `0x539`).
 
-## 2. Text & Binary Processing (grep, sed, tr, strings, objdump)
-Utilizate pentru filtrarea datelor și analiza codului mașină.
+## 3. Reverse Engineering & Debugging (ltrace, env injection)
+* `ltrace ./[binar]`
+    * Interceptează apelurile către librării (ex: `getenv`). Arată exact ce date cere programul de la sistem.
+* `[VAR]=[valoare] ./[binar]`
+    * **Utilizare:** Injectarea unei variabile de mediu la rularea locală (ex: `FLAG=test ./main`).
+    * **Rol:** Verificarea modului în care programul reacționează când `getenv` găsește variabila căutată.
+* `gdb ./[binar]` (GNU Debugger)
+    * `break [nume_functie]` → Pune un punct de oprire.
+    * `x/s $rdi` → Examinează argumentele funcțiilor în x64.
 
-- `grep -E "[pattern]"`
-    - `-E` (extended-regexp) → Permite utilizarea metacaracterelor avansate.
-- `grep -B [n] -A [m] "[pattern]"`
-    - `-B` (Before) și `-A` (After) → Esențial în Assembly pentru a vedea instrucțiunile care pregătesc regiștrii înainte de un apel de funcție (`call`).
-- `sed 's/[vechi]/[nou]/g'` → Comandă de înlocuire globală.
-- `tr -d '[caracter]'` → Șterge caractere specifice din input.
-- `strings [fisier]` → Extrage șirurile ASCII (ex: numele variabilei `FLAG`).
-- `objdump -d [fisier]`
-    - `-d` (disassemble) → Traduce binarul în Assembly. Permite identificarea salturilor (`jmp`) care ocolesc codul important.
+## 4. Conversii & Calcule Rapide (Bash)
+* `echo $((0x[val_hex]))`
+    * **Utilizare:** Transformă rapid o valoare din hex (găsită în `objdump`) în zecimal (pentru a fi introdusă în `scanf`).
+* `printf "%d\n" 0x[val_hex]`
+    * Metodă alternativă de conversie Hex-to-Dec.
 
-## 3. Reverse Engineering & Debugging (gdb, ltrace)
-Analiza execuției programului în timp real pentru a înțelege logica internă.
+## 5. System & Permissions (chmod, file)
+* `chmod +x [fisier]`
+    * **Utilizare:** Adaugă drepturi de execuție. Necesar atunci când primești `Permission denied` la rularea binarului descărcat.
+* `file [fisier]`
+    * Determină arhitectura (ex: 32-bit vs 64-bit) și dacă binarul este `stripped` (fără simboluri de debug) sau `not stripped`.
 
-- `ltrace ./[binar]`
-    - Interceptează apelurile către librării (ex: `getenv`). Arată exact ce date cere programul de la sistem.
-- `gdb ./[binar]` (GNU Debugger)
-    - `break [nume_functie]` → Pune un punct de oprire (ex: `break main` sau `break getenv`).
-    - `run` (r) → Pornește programul în debugger.
-    - `continue` (c) → Reia execuția după o oprire.
-    - `x/s $rdi` → Examinează (`x`) ca string (`/s`) conținutul registrului `RDI` (primul argument al funcției în x64).
-
-
-
-## 4. Forensics & Image Manipulation (ImageMagick, 7z)
-Utilizate pentru repararea și extragerea datelor din fișiere corupte.
-
-- `convert [input] -resize [scale] [output]` → Mărirea textului pentru lizibilitate.
-- `convert [input] -negate [output]` → Inversarea culorilor pentru contrast.
-- `7z x [arhiva] -p[parola]` → Extragere arhive protejate.
-
-## 5. Inspecție Binară & Scripting (hexedit, file, python3)
-Utilizate pentru analiza structurii la nivel de octeți.
-
-- `hexedit [fisier]` → Vizualizarea și modificarea manuală a octeților (Magic Bytes).
-- `file [fisier]` → Determină tipul de fișier pe baza header-ului.
-- `python3 -c "print(open('file','rb').read()[start:end])"`
-    - **Utilizare:** Citirea unei porțiuni precise de date dintr-un binar de la un offset hexazecimal găsit în `objdump`.
+## 6. Forensics & Hex (hexedit, python3)
+* `hexedit [fisier]` → Vizualizarea și modificarea manuală a octeților (Magic Bytes).
+* `python3 -c "print(open('file','rb').read()[start:end])"`
+    * Citirea fragmentelor precise de date dintr-un binar.
 
 ---
 
-#### Notes:
+#### 💡 Note Finale:
+* **Registre (RAX vs EAX):** `RAX` (64 biți) este folosit pentru adrese/pointeri, `EAX` (32 biți) pentru numere întregi și rezultate de comparare.
+* **Logica cmp/je:** După un `scanf`, instrucțiunea `cmp eax, 0x[val]` urmată de un `je` (jump if equal) indică aproape sigur o opțiune de meniu sau o parolă numerică.
 - **Redirecționare (`>`):** Salvează rezultatul procesării într-un fișier nou, evitând coruperea sursei.
 - **Pipes (`|`):** Combină comenzile pentru procesare în timp real (ex: `objdump -d main | grep getenv`).
 - **Logica Backdoor:** Dacă în `objdump` apare o comparație (`cmp`) care nu e în meniu, testează acea valoare (ex: `1337`) pentru a accesa căi de execuție ascunse.
