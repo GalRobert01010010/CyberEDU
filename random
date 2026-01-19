@@ -3,44 +3,34 @@
 - Goal: Identify a hidden input condition (`1337`) in a compiled binary and extract a flag stored in a server-side environment variable.
 
 ## Commands:
+* **1. `file main`**
+    * **Explicație Tehnică:** Identifică tipul fișierului și arhitectura (ELF 64-bit). Verifică dacă binarul are simboluri (not stripped).
+    * **Rol în Challenge:** Ne-a confirmat că este un executabil Linux valid și că putem vedea numele funcțiilor în analiză.
 
-objdump -d main | grep -B 10 -A 5 "call.*getenv"
-- objdump → utility for displaying information from object files
-- -d → disassemble (translates machine code into human-readable assembly)
-- | → pipe the assembly output to the filter tool
-- grep → search tool for text patterns
-- -B 10 → Before (displays 10 lines of code before the match to see register preparation)
-- -A 5 → After (displays 5 lines after the match to see how the result is handled)
-- "call.*getenv" → regex pattern to find where the program requests environment variables
-- Purpose: Locate the logic gate that controls access to the flag and identify the variable name being requested.
+* **2. `strings main`**
+    * **Explicație Tehnică:** Extrage secvențele de caractere imprimabile din binar. Permite vizualizarea mesajelor de tip text.
+    * **Rol în Challenge:** Am descoperit indicii vizuale precum `Menu:` și `FLAG`, și am identificat prezența funcției `getenv`.
 
+* **3. `chmod +x main`**
+    * **Explicație Tehnică:** Modifică permisiunile sistemului de fișiere pentru a activa bitul de execuție pentru utilizator.
+    * **Rol în Challenge:** A eliminat eroarea `Permission denied`, permițându-ne să rulăm binarul pentru analiza dinamică.
 
+* **4. `ltrace ./main`**
+    * **Explicație Tehnică:** Interceptează apelurile către librăriile dinamice (C) și afișează argumentele funcțiilor.
+    * **Rol în Challenge:** Am observat fluxul `scanf` urmat de `rand` și am înțeles că programul așteaptă un input numeric.
 
-python3 -c "print(open('main','rb').read()[0x2021:0x2030])"
-- python3 -c → executes a Python command directly from the terminal
-- open('main','rb') → opens the binary file in Read-Binary mode
-- .read()[0x2021:0x2030] → slices the file to read bytes at the specific memory offset found in objdump
-- Purpose: Confirm the exact name of the environment variable (found to be `FLAG`) by reading the binary's data section at the address referenced in the assembly.
+* **5. `objdump -d -M intel main`**
+    * **Explicație Tehnică:** Dezasamblează codul mașină în instrucțiuni Assembly (sintaxa Intel) pentru a vedea logica procesorului.
+    * **Rol în Challenge:** Am găsit instrucțiunea critică `cmp eax, 0x539` după `scanf`, localizând ramura ascunsă pentru flag.
 
-gdb ./main
-- gdb → the GNU Debugger used for dynamic analysis
-- break getenv → sets a breakpoint at the entry of the system function that retrieves environment variables
-- run → starts the program execution
-- Purpose: Pause the program execution to inspect memory and registers at critical points.
+* **6. `echo $((0x539))`**
+    * **Explicație Tehnică:** Realizează conversia matematică din baza 16 (Hex) în baza 10 (Zecimal) direct în terminal.
+    * **Rol în Challenge:** Ne-a oferit codul necesar: **1337**, eliminând necesitatea de a ghici opțiunile.
 
-(gdb) x/s $rdi
-- x → examine memory
-- /s → format the output as a null-terminated string
-- $rdi → the register used in x64 Linux to pass the first argument to a function
-- Purpose: Verify that the program is indeed looking for the string "FLAG" when the getenv function is called.
+* **7. `nc 34.40.105.109 31443`**
+    * **Explicație Tehnică:** Deschide o conexiune TCP brută către un IP și Port specific pentru a trimite/primi date.
+    * **Rol în Challenge:** Conectarea finală la serverul cu flag-ul real și trimiterea codului `1337` pentru a-l obține.
 
-
-
-nc 34.40.70.104 30720
-- nc → Netcat, a utility for reading from and writing to network connections
-- IP & Port → the remote address where the official challenge is hosted
-- Input "1337" → the "magic number" discovered during assembly analysis that prevents the program from jumping over the flag-printing logic
-- Purpose: Connect to the live environment and trigger the hidden backdoor to print the real flag.
 
 ### Answer:
 flag{l33t_m3_to_g3t_th3_flag}
